@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FREIGHT · Centralized Freight Management</title>
+
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Supabase SDK (optional, for auth) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ===== Design System (same as before) ===== */
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --primary-light: rgba(102, 126, 234, 0.1);
+            --primary-rgb: 102, 126, 234;
+            --white: #e0e0e0;
+            --black: #000000;
+            --gray-50: #1f2128;
+            --gray-100: #2a2d3a;
+            --gray-200: #3a3d4a;
+            --gray-300: #4a4d5a;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --bg-primary: linear-gradient(135deg, #1a1c24 0%, #2d1b3d 100%);
+            --bg-card: linear-gradient(145deg, #2a2d3a, #1f2128);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+            --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+            --radius-xl: 1.5rem;
+            --radius-2xl: 2rem;
+            --radius-full: 9999px;
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-5: 1.25rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-10: 2.5rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            --space-20: 5rem;
+            --font-xs: 0.75rem;
+            --font-sm: 0.875rem;
+            --font-base: 1rem;
+            --font-lg: 1.125rem;
+            --font-xl: 1.25rem;
+            --font-2xl: 1.5rem;
+            --font-3xl: 1.875rem;
+            --font-4xl: 2.25rem;
+            --font-5xl: 3rem;
+            --container-max: 1280px;
+            --container-padding: 2rem;
+            --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            font-size: var(--font-base);
+            line-height: 1.6;
+            color: var(--white);
+            background: var(--bg-primary);
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: var(--container-max);
+            margin: 0 auto;
+            padding: 0 var(--container-padding);
+        }
+        h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; color: var(--white); }
+
+        /* ===== Buttons & Nav ===== */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+            padding: var(--space-3) var(--space-6); font-weight: 600; border-radius: var(--radius-full);
+            transition: var(--transition-all); cursor: pointer; border: none; text-decoration: none;
+        }
+        .btn-primary { background: var(--gradient-primary); color: var(--white); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: var(--white); color: var(--gray-900); border: 2px solid var(--gray-200); }
+        .btn-secondary:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-2px); }
+        .btn-outline { background: transparent; color: var(--white); border: 2px solid rgba(255,255,255,0.3); }
+        .btn-outline:hover { background: var(--white); color: var(--primary); border-color: var(--white); }
+        .btn-lg { padding: var(--space-4) var(--space-8); font-size: var(--font-lg); }
+
+        .header {
+            position: fixed; top: 0; left: 0; right: 0; background: rgba(42,45,58,0.95);
+            backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .header-content {
+            display: flex; align-items: center; justify-content: space-between; height: 80px;
+        }
+        .logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .nav-menu {
+            display: flex; align-items: center; gap: var(--space-2);
+            flex: 1; justify-content: center;
+        }
+        .nav-link {
+            padding: var(--space-2) var(--space-4); color: var(--gray-400); font-weight: 500;
+            text-decoration: none; border-radius: var(--radius-full); transition: var(--transition-all);
+            cursor: pointer;
+        }
+        .nav-link:hover, .nav-link.active { color: var(--white); background: var(--primary-light); }
+        .header-actions { display: flex; align-items: center; gap: var(--space-3); }
+        .login-btn {
+            padding: var(--space-2) var(--space-5); background: transparent; color: var(--gray-400);
+            font-weight: 600; border: 2px solid var(--gray-200); border-radius: var(--radius-full);
+            cursor: pointer; transition: var(--transition-all);
+        }
+        .login-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .mobile-menu-btn { display: none; font-size: var(--font-2xl); color: var(--white); background: none; border: none; cursor: pointer; }
+
+        /* ===== Hero Section (with image) ===== */
+        .hero {
+            padding-top: 80px; min-height: 100vh; display: flex; align-items: center;
+            background: var(--bg-primary); position: relative; overflow: hidden;
+        }
+        .hero-content {
+            display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-12);
+            align-items: center;
+        }
+        .hero-badge {
+            display: inline-block; padding: var(--space-2) var(--space-4);
+            background: var(--primary-light); color: var(--primary); font-weight: 600;
+            font-size: var(--font-sm); border-radius: var(--radius-full); margin-bottom: var(--space-4);
+        }
+        .hero-title {
+            font-size: clamp(var(--font-4xl), 5vw, var(--font-5xl)); font-weight: 800;
+            line-height: 1.1; margin-bottom: var(--space-4); color: var(--white);
+        }
+        .hero-title span { color: var(--primary); }
+        .hero-description {
+            font-size: var(--font-lg); color: var(--gray-400); margin-bottom: var(--space-8);
+            max-width: 500px;
+        }
+        .hero-stats {
+            display: flex; gap: var(--space-8); margin-top: var(--space-8);
+        }
+        .stat-number { font-size: var(--font-3xl); font-weight: 800; color: var(--white); }
+        .stat-label { font-size: var(--font-sm); color: var(--gray-500); }
+        .hero-image img {
+            width: 100%; max-width: 500px; border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl); animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* ===== Category Cards ===== */
+        .category-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-6);
+            margin: var(--space-12) 0;
+        }
+        .category-card {
+            background: var(--bg-card); padding: var(--space-8); border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg); transition: var(--transition-all);
+            border: 1px solid rgba(255,255,255,0.1); position: relative; overflow: hidden;
+            cursor: pointer;
+        }
+        .category-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-2xl); }
+        .category-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: var(--gradient-primary); transform: scaleX(0); transition: var(--transition-all);
+        }
+        .category-card:hover::before { transform: scaleX(1); }
+        .category-icon {
+            width: 70px; height: 70px; background: var(--primary-light); border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center; margin-bottom: var(--space-6);
+            color: var(--primary); font-size: var(--font-3xl); transition: var(--transition-all);
+        }
+        .category-card:hover .category-icon { background: var(--primary); color: var(--white); transform: rotateY(180deg); }
+        .category-title { font-size: var(--font-xl); font-weight: 700; color: var(--white); margin-bottom: var(--space-2); }
+        .category-desc { color: var(--gray-400); margin-bottom: var(--space-4); }
+        .category-count {
+            display: inline-block; padding: var(--space-1) var(--space-3); background: var(--primary-light);
+            color: var(--primary); border-radius: var(--radius-full); font-weight: 600; font-size: var(--font-sm);
+        }
+
+        /* ===== Hub Layout ===== */
+        .hub-header {
+            margin-top: 80px; background: var(--bg-primary); padding: var(--space-12) 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .hub-header h1 { font-size: var(--font-4xl); }
+        .hub-breadcrumb {
+            display: flex; align-items: center; gap: var(--space-2); color: var(--gray-400);
+            margin-top: var(--space-4); font-size: var(--font-sm);
+        }
+        .hub-breadcrumb a { color: var(--primary); text-decoration: none; cursor: pointer; }
+        .hub-content { padding: var(--space-12) 0; background: var(--bg-primary); }
+        .subsystems-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-6);
+        }
+        .subsystem-card {
+            background: var(--bg-card); padding: var(--space-6); border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-lg); border: 1px solid rgba(255,255,255,0.1);
+            transition: var(--transition-all);
+        }
+        .subsystem-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+        .subsystem-code {
+            display: inline-block; padding: var(--space-1) var(--space-3); background: var(--primary);
+            color: white; border-radius: var(--radius-full); font-weight: 700; font-size: var(--font-sm);
+            margin-bottom: var(--space-3);
+        }
+        .subsystem-title { font-size: var(--font-xl); font-weight: 700; color: var(--white); margin-bottom: var(--space-2); }
+        .module-list {
+            list-style: none; margin: var(--space-4) 0; color: var(--gray-400);
+            font-size: var(--font-sm);
+        }
+        .module-list li {
+            padding: var(--space-1) 0; display: flex; align-items: center; gap: var(--space-2);
+        }
+        .module-list i {
+            color: var(--primary); font-size: var(--font-xs); width: 18px;
+        }
+        .access-btn {
+            display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-5);
+            background: transparent; color: var(--primary); border: 2px solid var(--primary); border-radius: var(--radius-full);
+            font-weight: 600; cursor: pointer; transition: var(--transition-all); margin-top: var(--space-3);
+        }
+        .access-btn:hover { background: var(--primary); color: white; transform: translateX(5px); }
+
+        /* ===== Footer ===== */
+        .footer {
+            background: var(--gray-900); padding: var(--space-16) 0 var(--space-8);
+            margin-top: var(--space-8);
+        }
+        .footer-content {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: var(--space-12);
+            margin-bottom: var(--space-12);
+        }
+        .footer-title { font-size: var(--font-lg); font-weight: 600; margin-bottom: var(--space-6); color: white; }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: var(--space-3); }
+        .footer-links a { color: var(--gray-400); text-decoration: none; transition: var(--transition-all); }
+        .footer-links a:hover { color: white; padding-left: 5px; }
+        .footer-bottom {
+            padding-top: var(--space-8); border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center; color: var(--gray-400); font-size: var(--font-sm);
+        }
+
+        /* ===== Modals ===== */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); z-index: 2000;
+            align-items: center; justify-content: center; padding: var(--space-4);
+            animation: fadeIn 0.3s ease;
+        }
+        .modal.active { display: flex !important; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: linear-gradient(145deg, rgba(42, 45, 58, 0.95), rgba(31, 33, 40, 0.95));
+            border-radius: 28px; width: 90%;
+            max-width: 460px; max-height: 90vh; overflow-y: auto;
+            box-shadow: 
+                0 0 60px rgba(102, 126, 234, 0.2),
+                0 30px 90px rgba(0, 0, 0, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(102, 126, 234, 0.25);
+            position: relative;
+        }
+        
+        /* Subtle glow animation */
+        @keyframes modalGlow {
+            0%, 100% { box-shadow: 0 0 60px rgba(102, 126, 234, 0.2), 0 30px 90px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+            50% { box-shadow: 0 0 80px rgba(102, 126, 234, 0.3), 0 30px 90px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08); }
+        }
+        
+        .modal.active .modal-content {
+            animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), modalGlow 3s ease-in-out infinite;
+        }
+        
+        .modal-header {
+            padding: 40px 40px 32px; border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), transparent);
+        }
+        
+        .modal-header h2 {
+            font-size: 24px; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, var(--primary), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+        
+        .modal-close {
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px; 
+            color: var(--gray-400);
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover { 
+            color: #ef4444; 
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: rotate(90deg); 
+        }
+        
+        .modal-body { padding: 32px 40px 40px; }
+        
+        .form-group { margin-bottom: 24px; position: relative; }
+        
+        .form-label { 
+            display: block; 
+            font-weight: 600; 
+            color: var(--gray-400); 
+            margin-bottom: 10px;
+            font-size: 13px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        
+        .form-input {
+            width: 100%; 
+            padding: 14px 16px; 
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px; 
+            font-size: 15px; 
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--white); 
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-input::placeholder {
+            color: var(--gray-500);
+        }
+        
+        .form-input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+        
+        .auth-btn {
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, var(--primary), #764ba2); 
+            color: white;
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            cursor: pointer;
+            transition: all 0.3s ease; 
+            margin-top: 32px;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 6px 24px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .auth-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .auth-btn:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .auth-btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 12px 36px rgba(102,126,234,0.5);
+        }
+        
+        .auth-btn:active {
+            transform: translateY(0);
+        }
+        
+        .auth-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .auth-btn i {
+            font-size: 16px;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .auth-btn.loading i {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; animation: slideIn 0.3s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .toast-success { background: #10b981; color: white; }
+        .toast-error { background: #ef4444; color: white; }
+        .toast-info { background: #3b82f6; color: white; }
+        .toast.fade-out { animation: slideOut 0.3s ease forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* ===== Password Toggle ===== */
+        .password-input-container { position: relative; }
+        .password-toggle {
+            position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+            cursor: pointer; 
+            color: var(--gray-400); 
+            background: transparent; 
+            border: none;
+            padding: 6px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            transition: all 0.3s ease; 
+            opacity: 0; 
+            visibility: hidden;
+            border-radius: 6px;
+        }
+        .password-toggle.visible { opacity: 1; visibility: visible; }
+        .password-toggle:hover { 
+            color: var(--primary); 
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-50%) scale(1.1); 
+        }
+        .password-toggle svg { width: 20px; height: 20px; }
+        .password-input-container input { padding-right: 50px !important; }
+
+        /* ===== Login Attempt Tracker ===== */
+        .login-attempt-tracker {
+            display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 12px;
+            background: var(--gray-100); border-radius: var(--radius-lg);
+        }
+        .attempt-dots { display: flex; gap: 4px; }
+        .attempt-dot {
+            width: 10px; height: 10px; border-radius: 50%; transition: all 0.3s ease;
+        }
+        .attempt-dot.failed { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .attempt-dot.pending { background: var(--gray-400); }
+        .attempt-text { font-size: var(--font-xs); color: var(--gray-400); margin-left: auto; }
+
+        /* ===== Lockout Message ===== */
+        .lockout-message {
+            background: rgba(239,68,68,0.1); border: 1px solid #ef4444;
+            border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px;
+            text-align: center; animation: pulse 2s infinite;
+        }
+        .lockout-message i { font-size: 28px; color: #ef4444; margin-bottom: 6px; display: block; }
+        .lockout-message h4 { color: #ef4444; margin-bottom: 6px; font-size: var(--font-base); }
+        .lockout-message p { color: var(--white); font-size: var(--font-sm); }
+        .lockout-timer { font-size: 22px; font-weight: 700; color: #ef4444; margin-top: 6px; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.8; } }
+
+        /* ===== Security Popup ===== */
+        .security-popup-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 3099;
+        }
+        .security-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            z-index: 3100; background: var(--bg-card); border-radius: var(--radius-2xl);
+            padding: 24px; max-width: 400px; width: 90%;
+            border: 1px solid rgba(255,255,255,0.1); box-shadow: var(--shadow-2xl);
+            animation: modalSlideUp 0.25s ease;
+        }
+        .security-popup h3 { color: var(--white); font-size: var(--font-lg); margin-bottom: 14px; }
+        .security-rule {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+            padding: 7px 10px; border-radius: var(--radius-lg);
+        }
+        .security-rule.valid { background: rgba(16,185,129,0.1); border-left: 3px solid #10b981; }
+        .security-rule.invalid { background: rgba(239,68,68,0.1); border-left: 3px solid #ef4444; }
+        .security-rule span { color: var(--white); font-size: var(--font-sm); }
+        .security-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ===== Password Strength ===== */
+        .password-strength-meter {
+            height: 5px; background: var(--gray-100); border-radius: var(--radius-full);
+            margin-top: 10px; overflow: hidden;
+        }
+        .password-strength-fill {
+            height: 100%; width: 0%; transition: width 0.3s, background 0.3s;
+            border-radius: var(--radius-full);
+        }
+        .password-strength-fill.weak { width: 25%; background: #ef4444; }
+        .password-strength-fill.medium { width: 50%; background: #f59e0b; }
+        .password-strength-fill.strong { width: 75%; background: #10b981; }
+        .password-strength-fill.very-strong { width: 100%; background: #3b82f6; }
+        .pw-strength-row {
+            display: flex; justify-content: space-between; margin-top: 6px;
+            font-size: var(--font-xs); color: var(--gray-400);
+        }
+        .pw-strength-val { color: var(--white); font-weight: 600; }
+
+        /* ===== Enhanced Toast ===== */
+        .toast {
+            min-width: 280px; max-width: 380px; padding: 14px 18px;
+            border-radius: var(--radius-lg); border-left: 4px solid transparent;
+        }
+        .toast-success { background: rgba(16,185,129,0.12); border-left-color: #10b981; color: var(--white); }
+        .toast-error   { background: rgba(239,68,68,0.12);  border-left-color: #ef4444; color: var(--white); }
+        .toast-info    { background: rgba(59,130,246,0.12); border-left-color: #3b82f6; color: var(--white); }
+        .toast-warning { background: rgba(245,158,11,0.12); border-left-color: #f59e0b; color: var(--white); }
+        .toast-title { font-weight: 700; font-size: var(--font-sm); margin-bottom: 2px; }
+        .toast-msg   { font-size: var(--font-xs); opacity: 0.85; }
+
+        .hidden { display: none !important; }
+        .loading { position: relative; pointer-events: none; opacity: 0.75; }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .category-grid { grid-template-columns: repeat(2,1fr); }
+            .footer-content { grid-template-columns: repeat(2,1fr); }
+        }
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: block; }
+            .nav-menu {
+                display: none; position: absolute; top: 80px; left: 0; right: 0;
+                background: var(--bg-card); padding: var(--space-4); flex-direction: column;
+            }
+            .nav-menu.active { display: flex; }
+            .hero-content { grid-template-columns: 1fr; text-align: center; }
+            .hero-description { margin-left: auto; margin-right: auto; }
+            .hero-stats { justify-content: center; }
+            .hero-image { grid-row: 1; }
+            .category-grid { grid-template-columns: 1fr; }
+            .hero-stats { flex-direction: column; gap: var(--space-4); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with centered navigation -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">FREIGHT</div>
+                <nav class="nav-menu" id="navMenu">
+                    <a class="nav-link active" data-section="landing">Home</a>
+                    <a class="nav-link" data-section="hr">Human Resources</a>
+                    <a class="nav-link" data-section="core">Core Transaction</a>
+                    <a class="nav-link" data-section="logistics">Logistics</a>
+                    <a class="nav-link" data-section="financials">Financials</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="login-btn" id="loginBtn">Core Auth</button>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- LANDING SECTION with image and new dashboard button -->
+    <section class="hero" id="landing-section">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <span class="hero-badge"><i class="fas fa-shield-alt"></i> CORE AUTH REQUIRED</span>
+                    <h1 class="hero-title">Centralized Freight Management System</h1>
+                    <p class="hero-description">Integrate human resources, core transaction, logistics, and financials into one secure platform.</p>
+                    <div style="display: flex; gap: var(--space-4); flex-wrap: wrap;">
+                        <button class="btn btn-primary btn-lg" id="exploreBtn">Explore Modules <i class="fas fa-arrow-right"></i></button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat-item"><div class="stat-number">4</div><div class="stat-label">Core Pillars</div></div>
+                        <div class="stat-item"><div class="stat-number">14</div><div class="stat-label">Subsystems</div></div>
+                        <div class="stat-item"><div class="stat-number">24/7</div><div class="stat-label">Secure Access</div></div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <!-- Added image as requested -->
+                    <img src="https://images.pexels.com/photos/6169647/pexels-photo-6169647.jpeg?auto=compress&cs=tinysrgb&w=600" alt="Freight Courier" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'600\' height=\'400\' viewBox=\'0 0 600 400\'%3E%3Crect width=\'600\' height=\'400\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'200\' y=\'200\' font-family=\'Arial\' font-size=\'24\' fill=\'%23999\'%3EFreight Courier%3C/text%3E%3C/svg%3E'">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Category Cards (always visible below hero) -->
+    <section class="services-section" style="padding: var(--space-20) 0;" id="categories-section">
+        <div class="container">
+            <div class="section-header" style="text-align: center; margin-bottom: var(--space-12);">
+                <span class="section-subtitle" style="background: var(--primary-light); color: var(--primary); padding: var(--space-2) var(--space-4); border-radius: var(--radius-full);">Integrated Pillars</span>
+                <h2 class="section-title" style="font-size: var(--font-4xl); margin-top: var(--space-4);">Four Core Pillars of FREIGHT</h2>
+            </div>
+            <div class="category-grid">
+                <!-- Human Resources -->
+                <div class="category-card" data-dept="hr">
+                    <div class="category-icon"><i class="fas fa-users"></i></div>
+                    <h3 class="category-title">Human Resources</h3>
+                    <p class="category-desc">4 subsystems: talent acquisition, development, operations, compensation.</p>
+                    <span class="category-count">4 SUBSYSTEMS</span>
+                </div>
+                <!-- Core Transaction -->
+                <div class="category-card" data-dept="core">
+                    <div class="category-icon"><i class="fas fa-exchange-alt"></i></div>
+                    <h3 class="category-title">Core Transaction</h3>
+                    <p class="category-desc">3 subsystems: freight ops, service provider, customer relations.</p>
+                    <span class="category-count">3 SUBSYSTEMS</span>
+                </div>
+                <!-- Logistics -->
+                <div class="category-card" data-dept="logistics">
+                    <div class="category-icon"><i class="fas fa-truck"></i></div>
+                    <h3 class="category-title">Logistics</h3>
+                    <p class="category-desc">2 subsystems: supply chain & fleet management.</p>
+                    <span class="category-count">2 SUBSYSTEMS</span>
+                </div>
+                <!-- Financials -->
+                <div class="category-card" data-dept="financials">
+                    <div class="category-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3 class="category-title">Financials</h3>
+                    <p class="category-desc">5 core modules: disbursement, budget, collection, ledger, AP/AR.</p>
+                    <span class="category-count">5 MODULES</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== DEPARTMENT HUBS (hidden by default) ===== -->
+
+    <!-- Human Resources Hub -->
+    <section class="hub-header" id="hr-hub" style="display: none;">
+        <div class="container">
+            <h1><i class="fas fa-users" style="color: var(--primary);"></i> Human Resources · Department Hub</h1>
+            <div class="hub-breadcrumb">
+                <a data-section="landing">Home</a> <i class="fas fa-chevron-right"></i> <span>HR Hub</span>
+            </div>
+        </div>
+    </section>
+    <section class="hub-content" id="hr-hub-content" style="display: none;">
+        <div class="container">
+            <div class="subsystems-grid">
+                <!-- HR1 -->
+                <div class="subsystem-card" data-subsystem="hr1">
+                    <span class="subsystem-code">HR1</span>
+                    <h3 class="subsystem-title">Talent Acquisition & Workforce Entry</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Applicant Management</li>
+                        <li><i class="fas fa-circle"></i> Recruitment Management</li>
+                        <li><i class="fas fa-circle"></i> New Hire Onboarding</li>
+                        <li><i class="fas fa-circle"></i> Performance Management (Initial)</li>
+                        <li><i class="fas fa-circle"></i> Social Recognition</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="hr1"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+                <!-- HR2 -->
+                <div class="subsystem-card" data-subsystem="hr2">
+                    <span class="subsystem-code">HR2</span>
+                    <h3 class="subsystem-title">Talent Development & Career Pathing</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Competency Management</li>
+                        <li><i class="fas fa-circle"></i> Learning Management</li>
+                        <li><i class="fas fa-circle"></i> Training Management</li>
+                        <li><i class="fas fa-circle"></i> Succession Planning</li>
+                        <li><i class="fas fa-circle"></i> Employee Self-Service (ESS)</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="hr2"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+                <!-- HR3 -->
+                <div class="subsystem-card" data-subsystem="hr3">
+                    <span class="subsystem-code">HR3</span>
+                    <h3 class="subsystem-title">Workforce Operations & Time Management</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Time and Attendance System</li>
+                        <li><i class="fas fa-circle"></i> Shift and Schedule Management</li>
+                        <li><i class="fas fa-circle"></i> Timesheet Management</li>
+                        <li><i class="fas fa-circle"></i> Leave Management</li>
+                        <li><i class="fas fa-circle"></i> Claims and Reimbursement</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="hr3"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+                <!-- HR4 -->
+                <div class="subsystem-card" data-subsystem="hr4">
+                    <span class="subsystem-code">HR4</span>
+                    <h3 class="subsystem-title">Compensation & HR Intelligence</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Core Human Capital Management (HCM)</li>
+                        <li><i class="fas fa-circle"></i> Payroll Management</li>
+                        <li><i class="fas fa-circle"></i> Compensation Planning</li>
+                        <li><i class="fas fa-circle"></i> HR Analytics Dashboard</li>
+                        <li><i class="fas fa-circle"></i> HMO & Benefits Administration</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="hr4"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+            </div>
+            <div style="margin-top: var(--space-8); text-align: center;">
+                <button class="btn btn-secondary" data-section="landing"><i class="fas fa-arrow-left"></i> Back to Main Hub</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Transaction Hub -->
+    <section class="hub-header" id="core-hub" style="display: none;">
+        <div class="container">
+            <h1><i class="fas fa-exchange-alt" style="color: var(--primary);"></i> Core Transaction · Department Hub</h1>
+            <div class="hub-breadcrumb">
+                <a data-section="landing">Home</a> <i class="fas fa-chevron-right"></i> <span>Core Hub</span>
+            </div>
+        </div>
+    </section>
+    <section class="hub-content" id="core-hub-content" style="display: none;">
+        <div class="container">
+            <div class="subsystems-grid">
+                <!-- CT1 -->
+                <div class="subsystem-card" data-subsystem="ct1">
+                    <span class="subsystem-code">CT1</span>
+                    <h3 class="subsystem-title">Freight Operations & Shipment Execution</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Shipment Booking & Routing System</li>
+                        <li><i class="fas fa-circle"></i> Consolidation & Deconsolidation Management</li>
+                        <li><i class="fas fa-circle"></i> House & Master Bill of Lading Generator</li>
+                        <li><i class="fas fa-circle"></i> Shipment File & Tracking System</li>
+                        <li><i class="fas fa-circle"></i> Purchase Order Integration System</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="ct1"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+                <!-- CT2 -->
+                <div class="subsystem-card" data-subsystem="ct2">
+                    <span class="subsystem-code">CT2</span>
+                    <h3 class="subsystem-title">Service Provider & Network Control</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Service Provider Management</li>
+                        <li><i class="fas fa-circle"></i> Service Network & Route Planner</li>
+                        <li><i class="fas fa-circle"></i> Rate & Tariff Management System</li>
+                        <li><i class="fas fa-circle"></i> Standard Operating Procedure (SOP) Manager</li>
+                        <li><i class="fas fa-circle"></i> Schedules & Transit Timetable Management</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="ct2"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+                <!-- CT3 -->
+                <div class="subsystem-card" data-subsystem="ct3">
+                    <span class="subsystem-code">CT3</span>
+                    <h3 class="subsystem-title">Customer Relationship & Business Control</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Customer Relationship Management (CRM)</li>
+                        <li><i class="fas fa-circle"></i> Contract & SLA Monitoring</li>
+                        <li><i class="fas fa-circle"></i> E-Documentation & Compliance Manager</li>
+                        <li><i class="fas fa-circle"></i> Business Intelligence & Freight Analytics</li>
+                        <li><i class="fas fa-circle"></i> Customer Portal & Notification Hub</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="ct3"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+            </div>
+            <div style="margin-top: var(--space-8); text-align: center;">
+                <button class="btn btn-secondary" data-section="landing"><i class="fas fa-arrow-left"></i> Back to Main Hub</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Logistics Hub -->
+    <section class="hub-header" id="logistics-hub" style="display: none;">
+        <div class="container">
+            <h1><i class="fas fa-truck" style="color: var(--primary);"></i> Logistics · Department Hub</h1>
+            <div class="hub-breadcrumb">
+                <a data-section="landing">Home</a> <i class="fas fa-chevron-right"></i> <span>Logistics Hub</span>
+            </div>
+        </div>
+    </section>
+    <section class="hub-content" id="logistics-hub-content" style="display: none;">
+        <div class="container">
+            <div class="subsystems-grid">
+                <!-- LOG1 -->
+                <div class="subsystem-card" data-subsystem="log1">
+                    <span class="subsystem-code">LOG1</span>
+                    <h3 class="subsystem-title">Smart Supply Chain & Procurement Management</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Smart Warehousing System (SWS)</li>
+                        <li><i class="fas fa-circle"></i> Procurement & Sourcing Management (PSM)</li>
+                        <li><i class="fas fa-circle"></i> Project Logistics Tracker (PLT)</li>
+                        <li><i class="fas fa-circle"></i> Asset Lifecycle & Maintenance (ALMS)</li>
+                        <li><i class="fas fa-circle"></i> Document Tracking & Logistics Records (DTRS)</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="log1"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+                <!-- LOG2 -->
+                <div class="subsystem-card" data-subsystem="log2">
+                    <span class="subsystem-code">LOG2</span>
+                    <h3 class="subsystem-title">Fleet and Transportation Operations</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Fleet & Vehicle Management (FVM)</li>
+                        <li><i class="fas fa-circle"></i> Vehicle Reservation & Dispatch System (VRDS)</li>
+                        <li><i class="fas fa-circle"></i> Driver and Trip Performance Monitoring</li>
+                        <li><i class="fas fa-circle"></i> Transport Cost Analysis & Optimization (TCAO)</li>
+                        <li><i class="fas fa-circle"></i> Mobile Fleet Command App (optional)</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="log2"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+            </div>
+            <div style="margin-top: var(--space-8); text-align: center;">
+                <button class="btn btn-secondary" data-section="landing"><i class="fas fa-arrow-left"></i> Back to Main Hub</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Financials Hub (single card) -->
+    <section class="hub-header" id="financials-hub" style="display: none;">
+        <div class="container">
+            <h1><i class="fas fa-chart-line" style="color: var(--primary);"></i> Financials · Department Hub</h1>
+            <div class="hub-breadcrumb">
+                <a data-section="landing">Home</a> <i class="fas fa-chevron-right"></i> <span>Financials Hub</span>
+            </div>
+        </div>
+    </section>
+    <section class="hub-content" id="financials-hub-content" style="display: none;">
+        <div class="container">
+            <div class="subsystems-grid" style="grid-template-columns: 1fr;">
+                <!-- Financials (single card) -->
+                <div class="subsystem-card" data-subsystem="fin">
+                    <span class="subsystem-code">FIN</span>
+                    <h3 class="subsystem-title">Financial Management</h3>
+                    <ul class="module-list">
+                        <li><i class="fas fa-circle"></i> Disbursement</li>
+                        <li><i class="fas fa-circle"></i> Budget Management</li>
+                        <li><i class="fas fa-circle"></i> Collection</li>
+                        <li><i class="fas fa-circle"></i> General Ledger</li>
+                        <li><i class="fas fa-circle"></i> Accounts Payable / Accounts Receivables</li>
+                    </ul>
+                    <button class="access-btn access-system" data-subsystem="fin"><i class="fas fa-lock"></i> Access System →</button>
+                </div>
+            </div>
+            <div style="margin-top: var(--space-8); text-align: center;">
+                <button class="btn btn-secondary" data-section="landing"><i class="fas fa-arrow-left"></i> Back to Main Hub</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Auth Modal -->
+    <div class="modal" id="authModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Smart Supply Chain Login</h2>
+                <button class="modal-close" id="closeAuthModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Lockout Message -->
+                <div id="lockoutMessage" class="lockout-message" style="display:none;">
+                    <i class="fas fa-lock"></i>
+                    <h4>Account Temporarily Locked</h4>
+                    <p>Too many failed attempts. Please wait:</p>
+                    <div class="lockout-timer" id="lockoutTimer">10:00</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <div style="position: relative;">
+                        <div style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gray-500); pointer-events: none;">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <input type="email" class="form-input" id="authEmail" placeholder="Enter your email" style="padding-left: 46px;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <div class="password-input-container">
+                        <div style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--gray-500); pointer-events: none; z-index: 1;">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <input type="password" class="form-input" id="authPassword" placeholder="Enter your password" style="padding-left: 46px;">
+                        <button type="button" class="password-toggle" id="auth-pw-toggle" title="Show/hide password">
+                            <svg id="auth-eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg id="auth-eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Attempt Tracker -->
+                <div class="login-attempt-tracker" id="attemptTracker" style="display:none;">
+                    <span class="attempt-text">Failed attempts:</span>
+                    <div class="attempt-dots" id="attemptDots">
+                        <span class="attempt-dot pending"></span>
+                        <span class="attempt-dot pending"></span>
+                        <span class="attempt-dot pending"></span>
+                    </div>
+                </div>
+
+                <button class="auth-btn" id="authLoginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Authenticate</span>
+                </button>
+                
+                <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid rgba(102, 126, 234, 0.15); text-align: center;">
+                    <div style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 100px;">
+                        <i class="fas fa-shield-alt" style="color: #10b981; font-size: 12px;"></i>
+                        <span style="color: #10b981; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase;">Secured by Freight Core Auth</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subsystem Login Modal -->
+    <div class="modal" id="subsystemLoginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="subsystemModalTitle">HR1 · Talent Acquisition</h2>
+                <button class="modal-close" id="closeSubsystemModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color: var(--gray-400); margin-bottom: var(--space-4);">Secure Access Portal</p>
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="subsystemUsername" placeholder="Enter your username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="subsystemPassword" placeholder="Enter your password">
+                </div>
+                <button class="auth-btn" id="subsystemLoginBtn"><i class="fas fa-sign-in-alt"></i> Sign in</button>
+                <div style="margin-top: var(--space-4); text-align: center;">
+                    <button class="btn btn-secondary" style="padding: var(--space-2) var(--space-4);" id="backToHubBtn"><i class="fas fa-arrow-left"></i> Back to Hub</button>
+                </div>
+                <p style="color: var(--gray-500); font-size: var(--font-xs); text-align: center; margin-top: var(--space-4);">2025 FREIGHT Management System. Secure Environment.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div><h4 class="footer-title">FREIGHT</h4><p style="color: var(--gray-400);">Centralized freight management platform.</p></div>
+                <div><h4 class="footer-title">About</h4><ul class="footer-links"><li><a href="#" data-section="landing">About FREIGHT</a></li><li><a href="#">Terms</a></li><li><a href="#">Privacy</a></li><li><a href="#">Support</a></li></ul></div>
+                <div><h4 class="footer-title">Pillars</h4><ul class="footer-links"><li><a href="#" data-dept="hr">Human Resources</a></li><li><a href="#" data-dept="core">Core Transaction</a></li><li><a href="#" data-dept="logistics">Logistics</a></li><li><a href="#" data-dept="financials">Financials</a></li></ul></div>
+                <div><h4 class="footer-title">Secure</h4><p><i class="fas fa-shield-alt" style="color: var(--primary);"></i> Core Auth v2.0</p></div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 FREIGHT ENTERPRISE. All rights reserved. SECURED BY CORE AUTHENTICATION</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Action Button -->
+    <button class="floating-btn" id="supportBtn"><i class="fas fa-headset"></i></button>
+
+    <script>
+
+        /*================================================
+         * SECURITY FEATURE 1: SESSION TIMEOUT
+         * Auto-logs out the user after 15 minutes of
+         * inactivity (no mouse/keyboard/touch events).
+         * A 60-second warning toast fires before logout.
+         *================================================*/
+        const SESSION_TIMEOUT_MS  = 15 * 60 * 1000;   // 15 minutes
+        const SESSION_WARNING_MS  = 14 * 60 * 1000;   // warn at 14 minutes
+        let _sessionTimer = null;
+        let _sessionWarnTimer = null;
+        let _sessionActive = false;
+
+        function sessionReset() {
+            if (!_sessionActive) return;
+            clearTimeout(_sessionTimer);
+            clearTimeout(_sessionWarnTimer);
+            _sessionWarnTimer = setTimeout(() => {
+                showToastSec('Session expiring in 60 seconds due to inactivity. Move your mouse or press a key to stay logged in.', 'warning', 'Session Warning');
+            }, SESSION_WARNING_MS);
+            _sessionTimer = setTimeout(async () => {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    await sb.auth.signOut();
+                    showToastSec('You have been logged out due to inactivity.', 'warning', 'Session Expired');
+                    const lBtn = document.getElementById('loginBtn');
+                    if (lBtn) { lBtn.innerHTML = 'Core Auth'; lBtn.style.borderColor = ''; lBtn.style.color = ''; lBtn.onclick = null; }
+                }
+                _sessionActive = false;
+            }, SESSION_TIMEOUT_MS);
+        }
+
+        function sessionStart() {
+            _sessionActive = true;
+            ['mousemove','keydown','click','touchstart','scroll'].forEach(evt =>
+                document.addEventListener(evt, sessionReset, { passive: true })
+            );
+            sessionReset();
+        }
+
+        /*================================================
+         * SECURITY FEATURE 2: LOGIN NONCE (CSRF-STYLE TOKEN)
+         * A cryptographically random nonce is generated
+         * each time the auth modal opens. The nonce must
+         * match when the login button is clicked —
+         * preventing replay or cross-tab form submissions.
+         *================================================*/
+        let _loginNonce = null;
+
+        function generateNonce() {
+            const arr = new Uint8Array(16);
+            crypto.getRandomValues(arr);
+            return Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
+        }
+
+        function refreshLoginNonce() {
+            _loginNonce = generateNonce();
+        }
+
+        function consumeNonce(provided) {
+            if (!_loginNonce || provided !== _loginNonce) return false;
+            _loginNonce = null;   // one-time use
+            return true;
+        }
+
+        /*================================================
+         * SECURITY FEATURE 3: BOT / RAPID-ATTEMPT DETECTION
+         * Tracks the time between login attempts. If two
+         * attempts arrive within 1.5 seconds of each other,
+         * the system flags it as suspicious, adds a
+         * progressive delay (up to 8s), and warns the user.
+         *================================================*/
+        const BOT_CFG = {
+            MIN_HUMAN_MS: 1500,    // below this = suspicious
+            KEY_LAST_ATTEMPT: 'freight_last_attempt_ts',
+            KEY_BOT_SCORE:    'freight_bot_score'
+        };
+
+        function botRecordAttempt() {
+            const now = Date.now();
+            const last = parseInt(localStorage.getItem(BOT_CFG.KEY_LAST_ATTEMPT) || '0');
+            let score  = parseInt(localStorage.getItem(BOT_CFG.KEY_BOT_SCORE)    || '0');
+            localStorage.setItem(BOT_CFG.KEY_LAST_ATTEMPT, now);
+            if (last && (now - last) < BOT_CFG.MIN_HUMAN_MS) {
+                score = Math.min(score + 1, 5);
+                localStorage.setItem(BOT_CFG.KEY_BOT_SCORE, score);
+                return score;   // suspicious score > 0
+            }
+            // Normal pace — decay score
+            score = Math.max(score - 1, 0);
+            localStorage.setItem(BOT_CFG.KEY_BOT_SCORE, score);
+            return 0;
+        }
+
+        function botGetDelay() {
+            const score = parseInt(localStorage.getItem(BOT_CFG.KEY_BOT_SCORE) || '0');
+            return score > 0 ? Math.min(score * 2000, 8000) : 0;   // 2s per score point, max 8s
+        }
+
+        function botReset() {
+            localStorage.removeItem(BOT_CFG.KEY_LAST_ATTEMPT);
+            localStorage.removeItem(BOT_CFG.KEY_BOT_SCORE);
+        }
+
+        /*================================================
+         * PASSWORD RULES & SECURITY
+         *================================================*/
+        const PWD_RULES = [
+            { id:'length',    text:'Minimum 8 characters',              regex:/.{8,}/ },
+            { id:'uppercase', text:'At least one uppercase letter (A-Z)', regex:/[A-Z]/ },
+            { id:'lowercase', text:'At least one lowercase letter (a-z)', regex:/[a-z]/ },
+            { id:'number',    text:'At least one number (0-9)',           regex:/[0-9]/ },
+            { id:'special',   text:'At least one special character (!@#$%^&*)', regex:/[!@#$%^&*]/ }
+        ];
+
+        function initSecurityRules() {
+            const box = document.getElementById('sec-rules');
+            if (!box) return;
+            box.innerHTML = PWD_RULES.map(r => `
+                <div class="security-rule invalid" id="rule-${r.id}">
+                    <svg class="security-icon" viewBox="0 0 16 16" fill="currentColor" id="rule-icon-${r.id}">
+                        <circle cx="8" cy="8" r="6" fill="#ef4444"/>
+                    </svg>
+                    <span>${r.text}</span>
+                </div>`).join('');
+        }
+
+        function validatePassword(pwd) {
+            let valid = 0;
+            PWD_RULES.forEach(r => {
+                const el   = document.getElementById('rule-' + r.id);
+                const icon = document.getElementById('rule-icon-' + r.id);
+                if (!el) return;
+                const ok = r.regex.test(pwd);
+                if (ok) { valid++; el.className='security-rule valid'; icon.innerHTML='<circle cx="8" cy="8" r="6" fill="#10b981"/>'; }
+                else    { el.className='security-rule invalid'; icon.innerHTML='<circle cx="8" cy="8" r="6" fill="#ef4444"/>'; }
+            });
+            updateStrength(valid);
+            return valid === PWD_RULES.length;
+        }
+
+        function updateStrength(count) {
+            const fill  = document.getElementById('sec-strength-fill');
+            const label = document.getElementById('sec-strength-text');
+            if (!fill || !label) return;
+            const classes = ['weak','medium','strong','very-strong'];
+            const labels  = ['Weak','Medium','Strong','Very Strong'];
+            const idx = Math.max(0, Math.min(Math.floor((count/PWD_RULES.length)*4)-1, 3));
+            fill.className = 'password-strength-fill ' + (count > 0 ? classes[idx] : '');
+            label.textContent = count > 0 ? labels[idx] : '—';
+        }
+
+        function showSecPopup() {
+            document.getElementById('sec-popup').classList.remove('hidden');
+            document.getElementById('sec-popup-overlay').classList.remove('hidden');
+        }
+        function hideSecPopup() {
+            document.getElementById('sec-popup').classList.add('hidden');
+            document.getElementById('sec-popup-overlay').classList.add('hidden');
+        }
+
+        /*================================================
+         * LOCKOUT / ATTEMPT TRACKER
+         *================================================*/
+        const SEC_CFG = {
+            MAX_ATTEMPTS: 3,
+            LOCKOUT_MS: 600000,   // 10 min
+            KEY_ATTEMPTS: 'freight_login_attempts',
+            KEY_LOCKOUT:  'freight_lockout_until'
+        };
+        let _lockoutTimer = null;
+
+        function secLoadState() {
+            return {
+                attempts:    parseInt(localStorage.getItem(SEC_CFG.KEY_ATTEMPTS) || '0'),
+                lockoutUntil: parseInt(localStorage.getItem(SEC_CFG.KEY_LOCKOUT)  || '0')
+            };
+        }
+        function secSave(attempts, lockoutUntil) {
+            localStorage.setItem(SEC_CFG.KEY_ATTEMPTS, attempts);
+            if (lockoutUntil) localStorage.setItem(SEC_CFG.KEY_LOCKOUT, lockoutUntil);
+            else              localStorage.removeItem(SEC_CFG.KEY_LOCKOUT);
+        }
+        function secIsLocked() {
+            const { lockoutUntil } = secLoadState();
+            return lockoutUntil && Date.now() < lockoutUntil;
+        }
+        function secReset() {
+            secSave(0, null);
+            if (_lockoutTimer) { clearInterval(_lockoutTimer); _lockoutTimer = null; }
+            secUpdateUI();
+        }
+        function secRecordFail() {
+            let { attempts } = secLoadState();
+            attempts++;
+            if (attempts >= SEC_CFG.MAX_ATTEMPTS) {
+                const until = Date.now() + SEC_CFG.LOCKOUT_MS;
+                secSave(attempts, until);
+                secUpdateUI();
+                secStartLockTimer();
+                return true; // locked
+            }
+            secSave(attempts, null);
+            secUpdateUI();
+            return false;
+        }
+        function secStartLockTimer() {
+            if (_lockoutTimer) clearInterval(_lockoutTimer);
+            _lockoutTimer = setInterval(() => {
+                const { lockoutUntil } = secLoadState();
+                const timerEl = document.getElementById('lockoutTimer');
+                const lockEl  = document.getElementById('lockoutMessage');
+                if (!lockoutUntil || Date.now() >= lockoutUntil) {
+                    if (lockEl) lockEl.style.display = 'none';
+                    clearInterval(_lockoutTimer); _lockoutTimer = null;
+                    secReset(); return;
+                }
+                const rem = lockoutUntil - Date.now();
+                const m = Math.floor(rem/60000), s = Math.floor((rem%60000)/1000);
+                if (timerEl) timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+            }, 1000);
+        }
+        function secUpdateUI() {
+            const { attempts, lockoutUntil } = secLoadState();
+            const locked  = lockoutUntil && Date.now() < lockoutUntil;
+            const lockEl  = document.getElementById('lockoutMessage');
+            const trackEl = document.getElementById('attemptTracker');
+            const dots    = document.querySelectorAll('.attempt-dot');
+            const loginBtn2 = document.getElementById('authLoginBtn');
+            const emailEl   = document.getElementById('authEmail');
+            const pwEl      = document.getElementById('authPassword');
+
+            if (locked) {
+                if (lockEl)  lockEl.style.display  = 'block';
+                if (trackEl) trackEl.style.display = 'none';
+                if (loginBtn2) loginBtn2.disabled  = true;
+                if (emailEl)   emailEl.disabled    = true;
+                if (pwEl)      pwEl.disabled        = true;
+                secStartLockTimer();
+            } else {
+                if (lockEl)  lockEl.style.display  = 'none';
+                if (loginBtn2) loginBtn2.disabled  = false;
+                if (emailEl)   emailEl.disabled    = false;
+                if (pwEl)      pwEl.disabled        = false;
+                if (attempts > 0 && trackEl) {
+                    trackEl.style.display = 'flex';
+                    dots.forEach((d,i) => d.className = 'attempt-dot ' + (i < attempts ? 'failed' : 'pending'));
+                } else if (trackEl) {
+                    trackEl.style.display = 'none';
+                }
+            }
+        }
+
+        /*================================================
+         * ENHANCED TOAST
+         *================================================*/
+        function showToastSec(msg, type='info', title='') {
+            document.querySelectorAll('.toast').forEach(t => t.remove());
+            const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', warning:'fa-exclamation-triangle', info:'fa-info-circle' };
+            const titles = { success:'Success', error:'Error', warning:'Warning', info:'Info' };
+            const t = document.createElement('div');
+            t.className = 'toast toast-' + type;
+            t.innerHTML = `<div><div class="toast-title"><i class="fas ${icons[type]}"></i> ${title||titles[type]}</div><div class="toast-msg">${msg}</div></div>`;
+            document.body.appendChild(t);
+            setTimeout(() => { t.classList.add('fade-out'); setTimeout(() => t.remove(), 300); }, 4500);
+        }
+
+        /*================================================
+         * PASSWORD VISIBILITY TOGGLE
+         *================================================*/
+        function initPwToggle() {
+            const input   = document.getElementById('authPassword');
+            const toggleBtn = document.getElementById('auth-pw-toggle');
+            const eyeClose  = document.getElementById('auth-eye-closed');
+            const eyeOpen   = document.getElementById('auth-eye-open');
+            if (!input || !toggleBtn) return;
+
+            input.addEventListener('input', () => {
+                toggleBtn.classList.toggle('visible', input.value.length > 0);
+            });
+            toggleBtn.addEventListener('click', () => {
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                eyeClose.classList.toggle('hidden', show);
+                eyeOpen.classList.toggle('hidden', !show);
+            });
+        }
+
+        // Supabase configuration
+        // Supabase configuration
+        const SUPABASE_URL  = "https://cnedazwdfsrbktmossxx.supabase.co";
+        const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNuZWRhendkZnNyYmt0bW9zc3h4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MTk0MzYsImV4cCI6MjA4MTI5NTQzNn0.K8_xXMjCyMzEnjXf1KfYI7OqYNxSwN6wMWGS_pilqpU";
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { storageKey: 'freight-logistics-auth', storage: window.localStorage, autoRefreshToken: true, persistSession: true } });
+
+        (function() {
+            // Toast helper — delegates to enhanced security toast
+            const showToast = (message, type = 'info', title = '') => showToastSec(message, type, title);
+
+            // DOM elements
+            const sections = {
+                landing: document.getElementById('landing-section'),
+                categories: document.getElementById('categories-section'),
+                hrHub: document.getElementById('hr-hub'),
+                hrHubContent: document.getElementById('hr-hub-content'),
+                coreHub: document.getElementById('core-hub'),
+                coreHubContent: document.getElementById('core-hub-content'),
+                logisticsHub: document.getElementById('logistics-hub'),
+                logisticsHubContent: document.getElementById('logistics-hub-content'),
+                financialsHub: document.getElementById('financials-hub'),
+                financialsHubContent: document.getElementById('financials-hub-content')
+            };
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const categoryCards = document.querySelectorAll('.category-card');
+            const backButtons = document.querySelectorAll('[data-section="landing"]');
+            const accessButtons = document.querySelectorAll('.access-system');
+            const authModal = document.getElementById('authModal');
+            const subsystemModal = document.getElementById('subsystemLoginModal');
+            const closeAuth = document.getElementById('closeAuthModal');
+            const closeSubsystem = document.getElementById('closeSubsystemModal');
+            const loginBtn = document.getElementById('loginBtn');
+            const supportBtn = document.getElementById('supportBtn');
+            const mobileBtn = document.getElementById('mobileMenuBtn');
+            const navMenu = document.getElementById('navMenu');
+            const exploreBtn = document.getElementById('exploreBtn');
+
+            let currentSubsystem = 'hr1';
+
+            // Hide all hubs, show landing
+            function showLanding() {
+                sections.landing.style.display = 'flex';
+                sections.categories.style.display = 'block';
+                sections.hrHub.style.display = 'none';
+                sections.hrHubContent.style.display = 'none';
+                sections.coreHub.style.display = 'none';
+                sections.coreHubContent.style.display = 'none';
+                sections.logisticsHub.style.display = 'none';
+                sections.logisticsHubContent.style.display = 'none';
+                sections.financialsHub.style.display = 'none';
+                sections.financialsHubContent.style.display = 'none';
+                updateActiveNav('landing');
+            }
+
+            function showHRHub() {
+                sections.landing.style.display = 'none';
+                sections.categories.style.display = 'none';
+                sections.hrHub.style.display = 'block';
+                sections.hrHubContent.style.display = 'block';
+                sections.coreHub.style.display = 'none';
+                sections.coreHubContent.style.display = 'none';
+                sections.logisticsHub.style.display = 'none';
+                sections.logisticsHubContent.style.display = 'none';
+                sections.financialsHub.style.display = 'none';
+                sections.financialsHubContent.style.display = 'none';
+                updateActiveNav('hr');
+            }
+
+            function showCoreHub() {
+                sections.landing.style.display = 'none';
+                sections.categories.style.display = 'none';
+                sections.hrHub.style.display = 'none';
+                sections.hrHubContent.style.display = 'none';
+                sections.coreHub.style.display = 'block';
+                sections.coreHubContent.style.display = 'block';
+                sections.logisticsHub.style.display = 'none';
+                sections.logisticsHubContent.style.display = 'none';
+                sections.financialsHub.style.display = 'none';
+                sections.financialsHubContent.style.display = 'none';
+                updateActiveNav('core');
+            }
+
+            function showLogisticsHub() {
+                sections.landing.style.display = 'none';
+                sections.categories.style.display = 'none';
+                sections.hrHub.style.display = 'none';
+                sections.hrHubContent.style.display = 'none';
+                sections.coreHub.style.display = 'none';
+                sections.coreHubContent.style.display = 'none';
+                sections.logisticsHub.style.display = 'block';
+                sections.logisticsHubContent.style.display = 'block';
+                sections.financialsHub.style.display = 'none';
+                sections.financialsHubContent.style.display = 'none';
+                updateActiveNav('logistics');
+            }
+
+            function showFinancialsHub() {
+                sections.landing.style.display = 'none';
+                sections.categories.style.display = 'none';
+                sections.hrHub.style.display = 'none';
+                sections.hrHubContent.style.display = 'none';
+                sections.coreHub.style.display = 'none';
+                sections.coreHubContent.style.display = 'none';
+                sections.logisticsHub.style.display = 'none';
+                sections.logisticsHubContent.style.display = 'none';
+                sections.financialsHub.style.display = 'block';
+                sections.financialsHubContent.style.display = 'block';
+                updateActiveNav('financials');
+            }
+
+            function updateActiveNav(section) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('data-section') === section) link.classList.add('active');
+                });
+            }
+
+            // Navigation from top menu
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const section = link.getAttribute('data-section');
+                    if (section === 'landing') showLanding();
+                    else if (section === 'hr') showHRHub();
+                    else if (section === 'core') showCoreHub();
+                    else if (section === 'logistics') showLogisticsHub();
+                    else if (section === 'financials') showFinancialsHub();
+                });
+            });
+
+            // Category cards click
+            categoryCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const dept = card.getAttribute('data-dept');
+                    if (dept === 'hr') showHRHub();
+                    else if (dept === 'core') showCoreHub();
+                    else if (dept === 'logistics') showLogisticsHub();
+                    else if (dept === 'financials') showFinancialsHub();
+                });
+            });
+
+            // Back to landing buttons
+            backButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showLanding();
+                });
+            });
+
+            // Explore button on landing
+            if (exploreBtn) {
+                exploreBtn.addEventListener('click', () => {
+                    document.getElementById('categories-section').scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            // Access System buttons — require Supabase login, then redirect to dashboard
+            accessButtons.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const subsystem = btn.getAttribute('data-subsystem');
+                    currentSubsystem = subsystem;
+                    // Check if already authenticated
+                    const { data: { session } } = await sb.auth.getSession();
+                    if (session) {
+                        // Check role from public.users
+                        const { data: userRow2 } = await sb
+                            .from('profiles')
+                            .select('role')
+                            .eq('id', session.user.id)
+                            .single();
+                        const role2 = userRow2?.role || '';
+                        const allowedRole2 = subsystem === 'log2' ? 'LOGISTIC2' : 'LOGISTIC1';
+                        if (!['LOGISTIC1','LOGISTIC2'].includes(role2)) {
+                            await sb.auth.signOut();
+                            showToast('Access denied. No logistics role assigned.', 'error');
+                            return;
+                        }
+                        if (subsystem !== 'log1' && subsystem !== 'log2') {
+                            showToast('This module is not available in this system.', 'error');
+                            return;
+                        }
+                        if (role2 !== allowedRole2) {
+                            showToast(`Access denied. Your account is for ${role2}, not ${allowedRole2}.`, 'error');
+                            return;
+                        }
+                        if (subsystem === 'log1') {
+                            showToast('Access granted! Redirecting to LOG1 Dashboard...', 'success');
+                            setTimeout(() => { window.location.href = 'LOGISTIC1/dashboard.html'; }, 600);
+                        } else if (subsystem === 'log2') {
+                            showToast('Access granted! Redirecting to LOG2 Dashboard...', 'success');
+                            setTimeout(() => { window.location.href = 'LOGISTIC2/dashboard.html'; }, 600);
+                        }
+                    } else {
+                        // Not logged in — only allow log1/log2 login
+                        if (subsystem !== 'log1' && subsystem !== 'log2') {
+                            showToast('This module is not available in this system.', 'error');
+                            return;
+                        }
+                        window._pendingSubsystem = subsystem;
+                        document.getElementById('authModal').querySelector('.modal-header h2').innerText =
+                            subsystem === 'log1' ? 'LOG1 · Smart Supply Chain Login' : 'LOG2 · Fleet Operations Login';
+                        refreshLoginNonce();
+                        authModal.classList.add('active');
+                    }
+                });
+            });
+
+            // Close modals
+            closeAuth.addEventListener('click', () => { authModal.classList.remove('active'); });
+            closeSubsystem.addEventListener('click', () => subsystemModal.classList.remove('active'));
+            window.addEventListener('click', (e) => {
+                if (e.target === authModal) authModal.classList.remove('active');
+                if (e.target === subsystemModal) subsystemModal.classList.remove('active');
+            });
+
+            // Core Auth login button — generate a fresh nonce each time the modal opens
+            loginBtn.addEventListener('click', () => {
+                authModal.classList.add('active');
+                refreshLoginNonce();
+                secUpdateUI();
+            });
+
+            document.getElementById('authLoginBtn').addEventListener('click', async () => {
+                // ── Security Feature 2: Nonce validation ──
+                const currentNonce = _loginNonce;
+                if (!consumeNonce(currentNonce)) {
+                    showToast('Invalid or expired login session. Please close and reopen the login form.', 'error', 'Security Error');
+                    return;
+                }
+                // Regenerate nonce for potential next attempt
+                refreshLoginNonce();
+
+                // ── Security Feature 3: Bot / rapid-attempt detection ──
+                const botScore = botRecordAttempt();
+                const botDelay = botGetDelay();
+                if (botScore >= 3) {
+                    showToast(`Suspicious activity detected. Please wait ${botDelay/1000}s before trying again.`, 'warning', 'Rate Limited');
+                    await new Promise(r => setTimeout(r, botDelay));
+                }
+
+                // Lockout check
+                if (secIsLocked()) {
+                    showToast('Account is temporarily locked. Please wait.', 'warning', 'Access Denied');
+                    return;
+                }
+                const email = document.getElementById('authEmail').value.trim();
+                const pass  = document.getElementById('authPassword').value;
+                const btn   = document.getElementById('authLoginBtn');
+                if (!email || !pass) {
+                    showToast('Please enter email and password', 'error', 'Validation Error');
+                    return;
+                }
+                btn.disabled = true;
+                btn.classList.add('loading');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                try {
+                    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+                    if (error) {
+                        const locked = secRecordFail();
+                        if (locked) {
+                            showToast('Too many failed attempts. Account locked for 10 minutes.', 'warning', 'Security Alert');
+                        } else {
+                            const { attempts } = secLoadState();
+                            const left = SEC_CFG.MAX_ATTEMPTS - attempts;
+                            showToast(`Invalid credentials. ${left} attempt${left===1?'':'s'} remaining.`, 'error', 'Login Failed');
+                        }
+                        btn.disabled = false;
+                        btn.classList.remove('loading');
+                        btn.innerHTML = '<i class="fas fa-key"></i> Authenticate';
+                        return;
+                    }
+                    // Successful auth — reset attempts
+                    secReset();
+                    botReset();
+                    sessionStart();
+                    // Check role
+                    const { data: userRow } = await sb.from('profiles').select('role').eq('id', data.user.id).single();
+                    const role = userRow?.role || '';
+                    const pendingSub = window._pendingSubsystem || '';
+                    const allowedRole = pendingSub === 'log2' ? 'LOGISTIC2' : 'LOGISTIC1';
+                    if (!['LOGISTIC1','LOGISTIC2'].includes(role)) {
+                        await sb.auth.signOut();
+                        showToast('Access denied. No logistics role assigned.', 'error', 'Access Denied');
+                        btn.disabled = false; btn.classList.remove('loading');
+                        btn.innerHTML = '<i class="fas fa-key"></i> Authenticate';
+                        return;
+                    }
+                    if (role !== allowedRole) {
+                        await sb.auth.signOut();
+                        showToast(`Access denied. Your account is for ${role}, not ${allowedRole}.`, 'error', 'Access Denied');
+                        btn.disabled = false; btn.classList.remove('loading');
+                        btn.innerHTML = '<i class="fas fa-key"></i> Authenticate';
+                        return;
+                    }
+                    showToast('Login successful! Redirecting...', 'success', 'Welcome');
+                    authModal.classList.remove('active');
+                    const dest2 = role === 'LOGISTIC2' ? 'LOGISTIC2/dashboard.html' : 'LOGISTIC1/dashboard.html';
+                    setTimeout(() => { window.location.href = dest2; }, 800);
+                } catch(err) {
+                    showToast('Authentication error. Please try again.', 'error', 'Error');
+                    btn.disabled = false; btn.classList.remove('loading');
+                    btn.innerHTML = '<i class="fas fa-key"></i> Authenticate';
+                }
+            });
+
+            // Subsystem login button — route to auth modal instead
+            document.getElementById('subsystemLoginBtn').addEventListener('click', () => {
+                subsystemModal.classList.remove('active');
+                refreshLoginNonce();
+                authModal.classList.add('active');
+            });
+
+            document.getElementById('backToHubBtn').addEventListener('click', () => {
+                subsystemModal.classList.remove('active');
+            });
+
+            // Mobile menu
+            mobileBtn.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
+            });
+
+            // Support FAB
+            supportBtn.addEventListener('click', () => {
+                showToast('Technical Support: 24/7 - Call (02) 1234 5678', 'info');
+            });
+
+            // Show access denied message if redirected back from a module
+            (function() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('error') === 'access_denied') {
+                    setTimeout(() => showToast('Access denied. Admin accounts only.', 'error'), 300);
+                }
+            })();
+
+            // Initialize: check session & show landing
+            (async () => {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    sessionStart();
+                    const lBtn = document.getElementById('loginBtn');
+                    lBtn.innerHTML = '<i class="fas fa-user-check"></i> ' + session.user.email.split('@')[0];
+                    lBtn.style.borderColor = 'var(--primary)';
+                    lBtn.style.color = 'var(--primary)';
+                    lBtn.onclick = () => {
+                        if(confirm('Logged in as ' + session.user.email + '. Go to Dashboard?')) {
+                            window.location.href = 'LOGISTIC1/dashboard.html';
+                        }
+                    };
+                }
+            })();
+            // ── Security init ──
+            initSecurityRules();
+            initPwToggle();
+            secUpdateUI();  // restore lockout state on page load
+
+            // Security popup close handlers
+            document.getElementById('sec-popup-close')?.addEventListener('click', hideSecPopup);
+            document.getElementById('sec-popup-overlay')?.addEventListener('click', hideSecPopup);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') hideSecPopup(); });
+
+            // Reset lockout UI when auth modal opens
+            const origCloseAuth = closeAuth.onclick;
+            authModal.addEventListener('transitionend', () => secUpdateUI());
+            document.getElementById('loginBtn').addEventListener('click', () => secUpdateUI(), true);
+
+            showLanding();
+        })();
+    </script>
+
+    <!-- Security Popup Overlay -->
+    <div id="sec-popup-overlay" class="security-popup-overlay hidden"></div>
+    <!-- Security Popup -->
+    <div id="sec-popup" class="security-popup hidden">
+        <h3>🔒 Password Requirements</h3>
+        <div id="sec-rules"></div>
+        <div class="password-strength-meter">
+            <div id="sec-strength-fill" class="password-strength-fill"></div>
+        </div>
+        <div class="pw-strength-row">
+            <span>Strength:</span>
+            <span class="pw-strength-val" id="sec-strength-text">—</span>
+        </div>
+        <div style="text-align:right;margin-top:16px;">
+            <button id="sec-popup-close" class="auth-btn" style="width:auto;padding:8px 22px;">Close</button>
+        </div>
+    </div>
+
+</body>
+</html>
